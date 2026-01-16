@@ -18,10 +18,17 @@ dec : VAR ID COLON type ASS exp SEMIC  #vardec
     | FUN ID COLON type LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR 
         	(LET dec+ IN)? exp SEMIC   #fundec
     ;
-           
-exp     : exp TIMES exp #times
+
+exp     : NOT exp #not              // Unary operators such as NOT have the highest priority
+        | exp TIMES exp #times
+        | exp DIVIDE exp #divide    // Division just like multiplication must happen before addition and subtraction. Currently DIVIDE has lower priority than TIMES
         | exp PLUS  exp #plus
-        | exp EQ  exp   #eq 
+        | exp MINUS exp #minus      // Currently MINUS has lower priority than PLUS
+        | exp EQ  exp   #eq
+        | exp LE exp #le            // Relational operator that is evaluated after math
+        | exp GE exp #ge            // Relational operator that is evaluated after math
+        | exp AND exp #and          // AND has higher priority than OR
+        | exp OR exp #or            // OR has lower priority than AND
         | LPAR exp RPAR #pars
     	| MINUS? NUM #integer
 	    | TRUE #true     
@@ -30,7 +37,7 @@ exp     : exp TIMES exp #times
 	    | PRINT LPAR exp RPAR #print
 	    | ID #id
 	    | ID LPAR (exp (COMMA exp)* )? RPAR #call
-        ; 
+        ;
              
 type    : INT #intType
         | BOOL #boolType
@@ -64,7 +71,17 @@ VAR     : 'var' ;
 FUN	    : 'fun' ;	  
 INT	    : 'int' ;
 BOOL	: 'bool' ;
-NUM     : '0' | ('1'..'9')('0'..'9')* ; 
+NUM     : '0' | ('1'..'9')('0'..'9')* ;
+
+// New operators
+
+LE      : '<=';
+GE      : '>=';
+OR      : '||';
+AND     : '&&';
+DIVIDE  : '/';
+// MIN  : '-'; Already present
+NOT     : '!';
 
 ID  	: ('a'..'z'|'A'..'Z')('a'..'z' | 'A'..'Z' | '0'..'9')* ;
 
