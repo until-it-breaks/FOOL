@@ -72,6 +72,22 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		return null;
 	}
 
+    @Override
+    public Void visitNode(GreaterEqualNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(LessEqualNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
 	@Override
 	public Void visitNode(TimesNode n) {
 		printNode(n);
@@ -80,6 +96,14 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		return null;
 	}
 
+    @Override
+    public Void visitNode(DivNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
 	@Override
 	public Void visitNode(PlusNode n) {
 		printNode(n);
@@ -87,6 +111,37 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		visit(n.right);
 		return null;
 	}
+
+    @Override
+    public Void visitNode(MinusNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(AndNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(OrNode n) {
+        printNode(n);
+        visit(n.left);
+        visit(n.right);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(NotNode n) {
+        printNode(n);
+        visit(n.exp);
+        return null;
+    }
 
 	@Override
 	public Void visitNode(CallNode n) {
