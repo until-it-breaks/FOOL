@@ -177,4 +177,117 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n,n.val.toString());
 		return "push "+n.val;
 	}
+
+    // New Operators
+
+    @Override
+    public String visitNode(LessEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();
+        String l2 = freshLabel();
+        return nlJoin(
+            visit(n.left),
+            visit(n.right),
+            "bleq " + l1,       // Checks if LEFT <= RIGHT, if true go to l1
+            "push 0",           // LEFT isn't <= RIGHT, push false (0)
+            "b " + l2,          // LEFT isn't <= RIGHT, go to l2
+            l1 + ":",
+            "push 1",           // LEFT is <= RIGHT, push true (1)
+            l2 + ":"
+        );
+    }
+
+    @Override
+    public String visitNode(GreaterEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();
+        String l2 = freshLabel();
+        return nlJoin(
+            visit(n.right),
+            visit(n.left),
+            "bleq " + l1,       // Checks if LEFT >= RIGHT, if true go to l1
+            "push 0",           // LEFT isn't >= RIGHT, push false (0)
+            "b " + l2,          // LEFT isn't >= RIGHT, go to l2
+            l1 + ":",
+            "push 1",           // LEFT is >= RIGHT, push true (1)
+            l2 + ":"
+        );
+    }
+
+    @Override
+    public String visitNode(OrNode n) {
+        if (print) printNode(n);
+        String lTrue = freshLabel();
+        String lEnd = freshLabel();
+        return nlJoin(
+            visit(n.left),
+            "push 1",
+            "beq " + lTrue,     // Pops LEFT and 1 (true), if beq evaluates to true, then LEFT has to be true and we go to lTrue
+            visit(n.right),
+            "push 1",
+            "beq " + lTrue,     // Pops RIGHT and 1 (true), if beq evaluates to true, then RIGHT has to be true and we go to lTrue
+            "push 0",           // None of LEFT or RIGHT was true, therefore OR evaluates to 0 (false)
+            "b " + lEnd,        // We go to lEnd and do nothing else
+            lTrue + ":",
+            "push 1",           // Either LEFT or RIGHT was true, and that's enough for an OR to return 1 (true)
+            lEnd + ":"
+        );
+    }
+
+    @Override
+    public String visitNode(AndNode n) {
+        if (print) printNode(n);
+        String lFalse = freshLabel();
+        String lEnd = freshLabel();
+        return nlJoin(
+            visit(n.left),
+            "push 0",
+            "beq " + lFalse,    // Pops LEFT and 0 (false), if beq evaluates to true, then LEFT has to be false and we go to lFalse
+            visit(n.right),
+            "push 0",
+            "beq " + lFalse,    // Pops RIGHT and 0 (false), if beq evaluates to true, then RIGHT has to be true and we go to lFalse
+            "push 1",           // None of LEFT or RIGHT was false, therefore both are true and AND evaluates to 1 (true)
+            "b " + lEnd,        // We go to lEnd and do nothing else
+            lFalse + ":",
+            "push 0",           // Either LEFT or RIGHT was false, and that's enough for an AND to return 0 (false)
+            lEnd + ":"
+        );
+    }
+
+    @Override
+    public String visitNode(DivNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+            visit(n.left),
+            visit(n.right),
+            "div"
+        );
+    }
+
+    @Override
+    public String visitNode(MinusNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+            visit(n.left),
+            visit(n.right),
+            "sub"
+        );
+    }
+
+    @Override
+    public String visitNode(NotNode n) {
+        if (print) printNode(n);
+        String lTrue = freshLabel();
+        String lEnd = freshLabel();
+        return nlJoin(
+            visit(n.exp),
+            "push 1",
+            "beq " + lTrue,     // Check if 'exp' equals to true, if so go to 'lTrue'
+            "push 1",           // Otherwise 'exp' has to be false and we push the opposite, that is 'true' (1)
+            "b " + lEnd,        // There is nothing else to do and we go to 'lEnd'
+            lTrue + ":",
+            "push 0",           // Since 'exp' is true, we push the opposite, that is 'false' (0)
+            lEnd + ":"
+        );
+    }
 }
