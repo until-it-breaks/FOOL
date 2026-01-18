@@ -173,19 +173,19 @@ public class AST {
 
     // New nodes
 
-    public static class LeNode extends Node {
+    public static class LessEqualNode extends Node {
         final Node left;
         final Node right;
-        LeNode(Node l, Node r) {left = l; right = r;}
+        LessEqualNode(Node l, Node r) {left = l; right = r;}
 
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
-    public static class GeNode extends Node {
+    public static class GreaterEqualNode extends Node {
         final Node left;
         final Node right;
-        GeNode(Node l, Node r) {left = l; right = r;}
+        GreaterEqualNode(Node l, Node r) {left = l; right = r;}
 
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
@@ -209,10 +209,10 @@ public class AST {
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
-    public static class DivideNode extends Node {
+    public static class DivNode extends Node {
         final Node left;
         final Node right;
-        DivideNode(Node l, Node r) {left = l; right = r;}
+        DivNode(Node l, Node r) {left = l; right = r;}
 
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}

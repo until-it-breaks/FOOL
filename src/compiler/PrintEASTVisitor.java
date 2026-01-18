@@ -147,7 +147,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
     // New Operators
 
     @Override
-    public Void visitNode(LeNode n) {
+    public Void visitNode(LessEqualNode n) {
         printNode(n);
         visit(n.left);
         visit(n.right);
@@ -155,7 +155,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
     }
 
     @Override
-    public Void visitNode(GeNode n) {
+    public Void visitNode(GreaterEqualNode n) {
         printNode(n);
         visit(n.left);
         visit(n.right);
@@ -179,7 +179,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
     }
 
     @Override
-    public Void visitNode(DivideNode n) {
+    public Void visitNode(DivNode n) {
         printNode(n);
         visit(n.left);
         visit(n.right);
