@@ -1,0 +1,15 @@
+let
+  var y:int = 5+2;
+  fun g:bool ()
+    let 
+      fun f:bool ()
+        let 
+          var x:int = -1;
+        in g();   
+    in if y==3 then { f() } else { false };
+in  
+  print ( 
+    if g() 
+      then { y }
+      else { 10 }
+  ); 
