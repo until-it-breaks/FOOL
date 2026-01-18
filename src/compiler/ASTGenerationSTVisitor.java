@@ -71,7 +71,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	}
 
 	@Override
-	public Node visitPlusMin(PlusMinContext c) {
+	public Node visitPlusMinus(PlusMinusContext c) {
 		if (print) printVarAndProdName(c);
         Node n = null;
         if (c.PLUS() != null) {
@@ -85,18 +85,18 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	}
 
 	@Override
-	public Node visitEqGL(EqGLContext c) {
+	public Node visitComp(CompContext c) {
 		if (print) printVarAndProdName(c);
         Node n = null;
         if (c.EQ() != null) {
             n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.EQ().getSymbol().getLine());
-        } else if (c.GEQ() != null) {
+        } else if (c.GE() != null) {
             n = new GreaterEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-            n.setLine(c.GEQ().getSymbol().getLine());
+            n.setLine(c.GE().getSymbol().getLine());
         } else {
             n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-            n.setLine(c.LEQ().getSymbol().getLine());
+            n.setLine(c.LE().getSymbol().getLine());
         }
         return n;
 	}

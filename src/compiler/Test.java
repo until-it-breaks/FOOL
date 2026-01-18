@@ -11,7 +11,7 @@ import java.nio.file.*;
 public class Test {
     public static void main(String[] args) throws Exception {
    			
-    	String fileName = "prova.fool";
+    	String fileName = "test_new_operators.fool";
 
     	CharStream chars = CharStreams.fromFileName(fileName);
     	FOOLLexer lexer = new FOOLLexer(chars);

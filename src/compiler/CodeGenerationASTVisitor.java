@@ -119,9 +119,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String l1 = freshLabel();
         String l2 = freshLabel();
         return nlJoin(
-                visit(n.left),
                 visit(n.right),
-                "bge "+l1,
+                visit(n.left),
+                "bleq "+l1,
                 "push 0",
                 "b "+l2,
                 l1+":",
@@ -138,7 +138,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         return nlJoin(
                 visit(n.left),
                 visit(n.right),
-                "ble "+l1,
+                "bleq "+l1,
                 "push 0",
                 "b "+l2,
                 l1+":",
@@ -192,10 +192,21 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         if (print) printNode(n);
         String l1 = freshLabel();
         String l2 = freshLabel();
+        String l3 = freshLabel();
         return nlJoin(
                 visit(n.left),
                 visit(n.right),
-                "and"
+                "beq " + l1,
+                "b " + l2,
+                l1 + ":",
+                visit(n.left),
+                "push 0",
+                "beq " + l2,
+                "push 1",
+                "b " + l3,
+                l2 + ":",
+                "push 0",
+                l3 + ":"
         );
     }
 
@@ -204,10 +215,21 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         if (print) printNode(n);
         String l1 = freshLabel();
         String l2 = freshLabel();
+        String l3 = freshLabel();
         return nlJoin(
                 visit(n.left),
                 visit(n.right),
-                "or"
+                "beq " + l1,
+                "b " + l2,
+                l1 + ":",
+                visit(n.left),
+                "push 1",
+                "beq " + l2,
+                "push 0",
+                "b " + l3,
+                l2 + ":",
+                "push 1",
+                l3 + ":"
         );
     }
 
@@ -218,8 +240,13 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String l2 = freshLabel();
         return nlJoin(
                 visit(n.exp),
-                visit(n.exp),
-                "nor"
+                "push 0",
+                "beq " + l1,
+                "push 0",
+                "b " + l2,
+                l1 + ":",
+                "push 1",
+                l2 + ":"
         );
     }
 
