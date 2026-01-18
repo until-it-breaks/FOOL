@@ -1,0 +1,12 @@
+let
+  var x:int = 5+3;
+  var y:int = 2;
+  /*fun f:bool (n:int, m:int)
+    let
+      var x:bool = true;
+    in x==(n==m);*/
+in
+  print (
+    x - y
+    )
+;

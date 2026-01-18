@@ -135,7 +135,7 @@ public class AST {
 
     public static class NotNode extends Node {
         final Node exp;
-        NotNode(Node l) {exp = l;}
+        NotNode(Node not) {exp = not;}
 
         @Override
         public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
