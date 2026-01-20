@@ -237,6 +237,8 @@ public class AST {
 
     // Object Oriented Nodes
 
+    // New Object-Oriented Declaration Nodes
+
     // Like ParNode
     public static class FieldNode extends DecNode {
         final String id;
@@ -282,7 +284,9 @@ public class AST {
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
-    // ID1.ID2()
+    // New Object-Oriented Expression Nodes
+
+    // Example: ID1.ID2(a,b,c)
     public static class ClassCallNode extends Node {
         final String objectId;
         final String methodId;
@@ -300,6 +304,7 @@ public class AST {
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
+    // Example: new ID1(a,b,c)
     public static class NewNode extends Node {
         final String id;
         final List<Node> argList;
@@ -315,8 +320,58 @@ public class AST {
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
+    // null
     public static class EmptyNode extends Node {
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    // New Object-Oriented Type Nodes
+
+    /**
+     * Whenever a class variable appears, this is used to keep track of its class.
+     * Example: var x: Point.
+     * RefTypeNode stores the string "Point" in this case.
+     */
+    public static class RefTypeNode extends TypeNode {
+        final String id;
+
+        public RefTypeNode(String id) {
+            this.id = id;
+        }
+
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    /**
+     * Handles the "null" literal type scenario. It's compatible with any RefTypeNode and allows assignments such as
+     * "var p:Point = null"
+     */
+    public static class EmptyTypeNode extends TypeNode {
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    /**
+     * Barebone version of ClassNode for type checking used to check that if I have "new Point(1,0)", then "Point" as
+     * class accepts two integer arguments. Another scenario is when a "Dot Call" is performed, for example if I have
+     * "p.setPoint(10,20)", it looks at p, sees it as RefTypeNode("Point"), pulls from the Symbol Table a ClassTypeNode
+     * for "Point", check if "setPoint" exists among "allMethods". After that ArrowTypeNode is also checked for
+     * "setPoint", making sure that 10 and 20 are of the right type.
+     */
+    public static class ClassTypeNode extends TypeNode {
+        final List<TypeNode> allFields;
+        final List<ArrowTypeNode> allMethods;
+
+        public ClassTypeNode(List<TypeNode> allFields, List<ArrowTypeNode> allMethods) {
+            this.allFields = Collections.unmodifiableList(allFields);
+            this.allMethods = Collections.unmodifiableList(allMethods);
+        }
+
+        @Override
+        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+            return visitor.visitNode(this);
+        }
     }
 }
