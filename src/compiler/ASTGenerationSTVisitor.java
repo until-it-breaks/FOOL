@@ -250,17 +250,16 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         // Get the class name
         String className = c.ID(0).getText();
 
-        // Collect fields (the constructor parameters)
+        // Collect all fields
         List<FieldNode> fields = new ArrayList<>();
-        if (c.type() != null) {
-            for (int i = 1; i < c.type().size(); i++) {     // Start from 1 since we are not going to implement inheritance
-                FieldNode f = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(i)));
-                f.setLine(c.ID(i).getSymbol().getLine());
-                fields.add(f);
-            }
+        // We are looping over the "type" list here, not the ID list which includes the class name plus all types
+        for (int i = 0; i < c.type().size(); i++) {
+            FieldNode f = new FieldNode(c.ID(i+1).getText(), (TypeNode) visit(c.type(i)));
+            f.setLine(c.ID(i+1).getSymbol().getLine());
+            fields.add(f);
         }
 
-        // Collect methods
+        // Collect all methods
         List<MethodNode> methods = new ArrayList<>();
         for (MethdecContext m: c.methdec()) {
             methods.add((MethodNode) visit(m));
