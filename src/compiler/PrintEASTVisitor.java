@@ -198,5 +198,4 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		printSTentry("offset "+entry.offset);
 		return null;
 	}
-
 }

@@ -151,26 +151,26 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
     @Override
     public TypeNode visitNode(AndNode n) throws TypeException {
         if (print) printNode(n);
-        if ( !(isSubtype(visit(n.left), new IntTypeNode()) &&
-                isSubtype(visit(n.right), new IntTypeNode())))
-            throw new TypeException("Non integers in and",n.getLine());
+        if ( !(isSubtype(visit(n.left), new BoolTypeNode()) &&
+                isSubtype(visit(n.right), new BoolTypeNode())))
+            throw new TypeException("Non booleans in and",n.getLine());
         return new BoolTypeNode();
     }
 
     @Override
     public TypeNode visitNode(OrNode n) throws TypeException {
         if (print) printNode(n);
-        if ( !(isSubtype(visit(n.left), new IntTypeNode()) &&
-                isSubtype(visit(n.right), new IntTypeNode())))
-            throw new TypeException("Non integers in or",n.getLine());
+        if ( !(isSubtype(visit(n.left), new BoolTypeNode()) &&
+                isSubtype(visit(n.right), new BoolTypeNode())))
+            throw new TypeException("Non booleans in or",n.getLine());
         return new BoolTypeNode();
     }
 
     @Override
     public TypeNode visitNode(NotNode n) throws TypeException {
         if (print) printNode(n);
-        if ( !(isSubtype(visit(n.exp), new IntTypeNode())))
-            throw new TypeException("Non integers in not",n.getLine());
+        if ( !(isSubtype(visit(n.exp), new BoolTypeNode())))
+            throw new TypeException("Non boolean in not",n.getLine());
         return new BoolTypeNode();
     }
 
@@ -239,5 +239,4 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printSTentry("type");
 		return ckvisit(entry.type); 
 	}
-
 }
