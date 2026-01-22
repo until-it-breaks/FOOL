@@ -79,15 +79,14 @@ public class AST {
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
-	
-	public static class EqualNode extends Node {
-		final Node left;
-		final Node right;
-		EqualNode(Node l, Node r) {left = l; right = r;}
 
-		@Override
-		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
-	}
+    public static class NotNode extends Node {
+        final Node exp;
+        NotNode(Node e) {exp = e;}
+
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
 
     public static class GreaterEqualNode extends Node {
         final Node left;
@@ -95,9 +94,7 @@ public class AST {
         GreaterEqualNode(Node l, Node r) {left = l; right = r;}
 
         @Override
-        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
     public static class LessEqualNode extends Node {
@@ -106,9 +103,7 @@ public class AST {
         LessEqualNode(Node l, Node r) {left = l; right = r;}
 
         @Override
-        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
     public static class AndNode extends Node {
@@ -117,9 +112,7 @@ public class AST {
         AndNode(Node l, Node r) {left = l; right = r;}
 
         @Override
-        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
     public static class OrNode extends Node {
@@ -128,21 +121,18 @@ public class AST {
         OrNode(Node l, Node r) {left = l; right = r;}
 
         @Override
-        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
-    public static class NotNode extends Node {
-        final Node exp;
-        NotNode(Node not) {exp = not;}
+	public static class EqualNode extends Node {
+		final Node left;
+		final Node right;
+		EqualNode(Node l, Node r) {left = l; right = r;}
 
-        @Override
-        public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
-    }
-
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
 	public static class TimesNode extends Node {
 		final Node left;
 		final Node right;
@@ -160,7 +150,7 @@ public class AST {
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
-	
+
 	public static class PlusNode extends Node {
 		final Node left;
 		final Node right;
@@ -176,11 +166,9 @@ public class AST {
         MinusNode(Node l, Node r) {left = l; right = r;}
 
         @Override
-        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {
-            return visitor.visitNode(this);
-        }
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
-	
+
 	public static class CallNode extends Node {
 		final String id;
 		final List<Node> arglist;
@@ -244,5 +232,4 @@ public class AST {
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
-
 }
