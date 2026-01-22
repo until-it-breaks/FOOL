@@ -7,8 +7,8 @@ import static compiler.lib.FOOLlib.*;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
 
-  CodeGenerationASTVisitor() {}
-  CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+    CodeGenerationASTVisitor() {}
+    CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
 
 	@Override
 	public String visitNode(ProgLetInNode n) {
@@ -177,4 +177,100 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n,n.val.toString());
 		return "push "+n.val;
 	}
+
+    @Override
+    public String visitNode(MinusNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.left),    // valuta operando sinistro e pusho sullo stack
+                visit(n.right),         // valuta operando destro e pusho sullo stack
+                "sub"                   // sottrae: pop right, pop left, push risultato (left - right)
+        );
+    }
+
+    @Override
+    public String visitNode(DivNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.left),    // valuta operando sinistro e pusho sullo stack
+                visit(n.right),         // valuta operando destro e pusho sullo stack
+                "div"                   // divide: pop right, pop left, pusho il risultato (left / right)
+        );
+    }
+
+    public String visitNode(NotNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.exp),     // valuta espressione booleana e pusho sullo stack
+                "push 1",               // push costante 1 sullo stack
+                "sub"                   // sottrai: 1 - exp e pusho il risultato sullo stack
+                                        //      se exp = 0 allora risultato = 1
+                                        //      se exp = 1 allora risultato = 0
+        );
+    }
+
+    @Override
+    public String visitNode(LessEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();           // etichetta per il caso "vero"
+        String l2 = freshLabel();           // etichetta per terminare operazione
+        return nlJoin(
+                visit(n.left),        // valuta operando sinistro e pusho sullo stack
+                visit(n.right),             // valuta operando destro e pusho sullo stack
+                "bleq " + l1,               // branch if left <= right: pop right, pop left, se cond vera salta a l1
+                "push 0",                   // cond falsa (left > right)
+                "b " + l2,                  // salta incondizionatamente all'uscita
+                l1 + ":",                   // etichetta caso vero
+                "push 1",                   // cond vera (left <= right)
+                l2 + ":"                    // etichetta di terminazione per pushare sullo stack il risultato
+        );
+    }
+
+    @Override
+    public String visitNode(GreaterEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();           // etichetta per il caso "vero"
+        String l2 = freshLabel();           // etichetta per terminare l'operazione
+        return nlJoin(
+                visit(n.right),       // valuta operando destro (invertiamo l'ordine rispetto a LEQ) e pusho sullo stack
+                visit(n.left),              // valuta operando sinistro e pusho sullo stack
+                "bleq " + l1,               // branch if right <= left (cioè left >= right): pop left, pop right, se cond vera salta a l1
+                "push 0",                   // cond falsa (left < right)
+                "b " + l2,                  // salta incondizionatamente all'uscita
+                l1 + ":",                   // etichetta caso vero
+                "push 1",                   // cond vera (left >= right)
+                l2 + ":"                    // etichetta di terminazione per pushare sullo stack il risultato
+        );
+    }
+
+    @Override
+    public String visitNode(AndNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.left),      // valuta operando sinistro e pusho sullo stack
+                visit(n.right),           // valuta operando destro e pusho sullo stack
+                "mult"                    // moltiplica: pop right, pop left, push risultato (left * right)
+                                          //        risultato: 1 solo se entrambi 1
+        );
+    }
+
+    @Override
+    public String visitNode(OrNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();               // etichetta per il caso vero
+        String l2 = freshLabel();               // etichetta per terminare l'operazione
+        return nlJoin(
+                visit(n.left),           // valuta operando sinistro e pusho sullo stack
+                "push 1",                       // pusho 1 sullo stack per il confronto
+                "beq " + l1,                    // se left == 1, salta a l1 (già vero, skip right): pop 1, pop left, se uguali salta
+                visit(n.right),                 // left era 0, valuta operando destro e pusho sullo stack
+                "push 1",                       // push 1 sullo stack per il confronto
+                "beq " + l1,                    // se right == 1, salta a l1 (vero): pop 1, pop right, se uguali salta
+                "push 0",                       // entrambi erano 0, allora pusho 0 (falso)
+                "b " + l2,                      // salta all'uscita
+                l1 + ":",                       // etichetta caso vero
+                "push 1",                       // cond vera (almeno uno era vero)
+                l2 + ":"                        // etichetta di terminazione per pushare sullo stack il risultato
+        );
+    }
 }
