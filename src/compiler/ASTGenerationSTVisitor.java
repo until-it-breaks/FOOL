@@ -59,53 +59,44 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitTimesDiv(TimesDivContext c) {
 		if (print) printVarAndProdName(c);
-        Node left = visit(c.exp(0));
-        Node right = visit(c.exp(1));
-        Node n;
-
+        Node n = null;
         if (c.TIMES() != null) {
-            n = new TimesNode(left, right);
-            n.setLine(c.TIMES().getSymbol().getLine());
+            n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.TIMES().getSymbol().getLine());        // setLine added
         } else {
-            n = new DivNode(left, right);
-            n.setLine(c.DIV().getSymbol().getLine());
+            n = new DivNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.DIV().getSymbol().getLine());        // setLine added
         }
-        return n;		
+        return n;
 	}
 
 	@Override
 	public Node visitPlusMinus(PlusMinusContext c) {
-        if (print) printVarAndProdName(c);
-        Node left = visit(c.exp(0));
-        Node right = visit(c.exp(1));
-        Node n;
-
+		if (print) printVarAndProdName(c);
+        Node n = null;
         if (c.PLUS() != null) {
-            n = new PlusNode(left, right);
+            n = new PlusNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.PLUS().getSymbol().getLine());
         } else {
-            n = new MinusNode(left, right);
-            n.setLine(c.MINUS().getSymbol().getLine());
+            n = new MinusNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.MINUS().getSymbol().getLine());        // setLine added
         }
         return n;
-    }
+	}
 
 	@Override
 	public Node visitComp(CompContext c) {
-        if (print) printVarAndProdName(c);
-        Node left = visit(c.exp(0));
-        Node right = visit(c.exp(1));
-        Node n;
-
+		if (print) printVarAndProdName(c);
+        Node n = null;
         if (c.EQ() != null) {
-            n = new EqualNode(left, right);
+            n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.EQ().getSymbol().getLine());
-        } else if (c.LE() != null) {
-            n = new LessEqualNode(left, right);
-            n.setLine(c.LE().getSymbol().getLine());
-        } else {
-            n = new GreaterEqualNode(left, right);
+        } else if (c.GE() != null) {
+            n = new GreaterEqualNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.GE().getSymbol().getLine());
+        } else {
+            n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.LE().getSymbol().getLine());
         }
         return n;
 	}

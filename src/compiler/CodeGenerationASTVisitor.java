@@ -7,8 +7,8 @@ import static compiler.lib.FOOLlib.*;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
 
-  CodeGenerationASTVisitor() {}
-  CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+    CodeGenerationASTVisitor() {}
+    CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
 
 	@Override
 	public String visitNode(ProgLetInNode n) {
@@ -178,79 +178,13 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return "push "+n.val;
 	}
 
-    // New Operators
-
     @Override
-    public String visitNode(LessEqualNode n) {
+    public String visitNode(MinusNode n) {
         if (print) printNode(n);
-        String l1 = freshLabel();
-        String l2 = freshLabel();
         return nlJoin(
-            visit(n.left),
-            visit(n.right),
-            "bleq " + l1,       // Checks if LEFT <= RIGHT, if true go to l1
-            "push 0",           // LEFT isn't <= RIGHT, push false (0)
-            "b " + l2,          // LEFT isn't <= RIGHT, go to l2
-            l1 + ":",
-            "push 1",           // LEFT is <= RIGHT, push true (1)
-            l2 + ":"
-        );
-    }
-
-    @Override
-    public String visitNode(GreaterEqualNode n) {
-        if (print) printNode(n);
-        String l1 = freshLabel();
-        String l2 = freshLabel();
-        return nlJoin(
-            visit(n.right),
-            visit(n.left),
-            "bleq " + l1,       // Checks if LEFT >= RIGHT, if true go to l1
-            "push 0",           // LEFT isn't >= RIGHT, push false (0)
-            "b " + l2,          // LEFT isn't >= RIGHT, go to l2
-            l1 + ":",
-            "push 1",           // LEFT is >= RIGHT, push true (1)
-            l2 + ":"
-        );
-    }
-
-    @Override
-    public String visitNode(OrNode n) {
-        if (print) printNode(n);
-        String lTrue = freshLabel();
-        String lEnd = freshLabel();
-        return nlJoin(
-            visit(n.left),
-            "push 1",
-            "beq " + lTrue,     // Pops LEFT and 1 (true), if beq evaluates to true, then LEFT has to be true and we go to lTrue
-            visit(n.right),
-            "push 1",
-            "beq " + lTrue,     // Pops RIGHT and 1 (true), if beq evaluates to true, then RIGHT has to be true and we go to lTrue
-            "push 0",           // None of LEFT or RIGHT was true, therefore OR evaluates to 0 (false)
-            "b " + lEnd,        // We go to lEnd and do nothing else
-            lTrue + ":",
-            "push 1",           // Either LEFT or RIGHT was true, and that's enough for an OR to return 1 (true)
-            lEnd + ":"
-        );
-    }
-
-    @Override
-    public String visitNode(AndNode n) {
-        if (print) printNode(n);
-        String lFalse = freshLabel();
-        String lEnd = freshLabel();
-        return nlJoin(
-            visit(n.left),
-            "push 0",
-            "beq " + lFalse,    // Pops LEFT and 0 (false), if beq evaluates to true, then LEFT has to be false and we go to lFalse
-            visit(n.right),
-            "push 0",
-            "beq " + lFalse,    // Pops RIGHT and 0 (false), if beq evaluates to true, then RIGHT has to be true and we go to lFalse
-            "push 1",           // None of LEFT or RIGHT was false, therefore both are true and AND evaluates to 1 (true)
-            "b " + lEnd,        // We go to lEnd and do nothing else
-            lFalse + ":",
-            "push 0",           // Either LEFT or RIGHT was false, and that's enough for an AND to return 0 (false)
-            lEnd + ":"
+            visit(n.left),              // valuta operando sinistro e pusho sullo stack
+            visit(n.right),             // valuta operando destro e pusho sullo stack
+            "sub"                       // sottrae: pop right, pop left, push risultato (left - right)
         );
     }
 
@@ -258,36 +192,85 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     public String visitNode(DivNode n) {
         if (print) printNode(n);
         return nlJoin(
-            visit(n.left),
-            visit(n.right),
-            "div"
+            visit(n.left),              // valuta operando sinistro e pusho sullo stack
+            visit(n.right),             // valuta operando destro e pusho sullo stack
+            "div"                       // divide: pop right, pop left, pusho il risultato (left / right)
         );
     }
 
-    @Override
-    public String visitNode(MinusNode n) {
-        if (print) printNode(n);
-        return nlJoin(
-            visit(n.left),
-            visit(n.right),
-            "sub"
-        );
-    }
-
-    @Override
     public String visitNode(NotNode n) {
         if (print) printNode(n);
-        String lTrue = freshLabel();
-        String lEnd = freshLabel();
         return nlJoin(
-            visit(n.exp),
-            "push 1",
-            "beq " + lTrue,     // Check if 'exp' equals to true, if so go to 'lTrue'
-            "push 1",           // Otherwise 'exp' has to be false and we push the opposite, that is 'true' (1)
-            "b " + lEnd,        // There is nothing else to do and we go to 'lEnd'
-            lTrue + ":",
-            "push 0",           // Since 'exp' is true, we push the opposite, that is 'false' (0)
-            lEnd + ":"
+            visit(n.exp),               // valuta espressione booleana e pusho sullo stack
+            "push 1",                   // push costante 1 sullo stack
+            "sub"                       // sottrai: 1 - exp e pusho il risultato sullo stack
+                                        //      se exp = 0 allora risultato = 1
+                                        //      se exp = 1 allora risultato = 0
+        );
+    }
+
+    @Override
+    public String visitNode(LessEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();       // etichetta per il caso "vero"
+        String l2 = freshLabel();       // etichetta per terminare operazione
+        return nlJoin(
+            visit(n.left),              // valuta operando sinistro e pusho sullo stack
+            visit(n.right),             // valuta operando destro e pusho sullo stack
+            "bleq " + l1,               // branch if left <= right: pop right, pop left, se cond vera salta a l1
+            "push 0",                   // cond falsa (left > right)
+            "b " + l2,                  // salta incondizionatamente all'uscita
+            l1 + ":",                   // etichetta caso vero
+            "push 1",                   // cond vera (left <= right)
+            l2 + ":"                    // etichetta di terminazione per pushare sullo stack il risultato
+        );
+    }
+
+    @Override
+    public String visitNode(GreaterEqualNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();       // etichetta per il caso "vero"
+        String l2 = freshLabel();       // etichetta per terminare l'operazione
+        return nlJoin(
+            visit(n.right),             // valuta operando destro (invertiamo l'ordine rispetto a LEQ) e pusho sullo stack
+            visit(n.left),              // valuta operando sinistro e pusho sullo stack
+            "bleq " + l1,               // branch if right <= left (cioè left >= right): pop left, pop right, se cond vera salta a l1
+            "push 0",                   // cond falsa (left < right)
+            "b " + l2,                  // salta incondizionatamente all'uscita
+            l1 + ":",                   // etichetta caso vero
+            "push 1",                   // cond vera (left >= right)risultato
+            l2 + ":"                    // etichetta di terminazione per pushare sullo stack il
+        );
+    }
+
+    @Override
+    public String visitNode(AndNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+            visit(n.left),              // valuta operando sinistro e pusho sullo stack
+            visit(n.right),             // valuta operando destro e pusho sullo stack
+            "mult"                      // moltiplica: pop right, pop left, push risultato (left * right)
+                                        //        risultato: 1 solo se entrambi 1
+        );
+    }
+
+    @Override
+    public String visitNode(OrNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();        // etichetta per il caso vero
+        String l2 = freshLabel();        // etichetta per terminare l'operazione
+        return nlJoin(
+            visit(n.left),               // valuta operando sinistro e pusho sullo stack
+            "push 1",                    // pusho 1 sullo stack per il confronto
+            "beq " + l1,                 // se left == 1, salta a l1 (già vero, skip right): pop 1, pop left, se uguali salta
+            visit(n.right),              // left era 0, valuta operando destro e pusho sullo stack
+            "push 1",                    // push 1 sullo stack per il confronto
+            "beq " + l1,                 // se right == 1, salta a l1 (vero): pop 1, pop right, se uguali salta
+            "push 0",                    // entrambi erano 0, allora pusho 0 (falso)
+            "b " + l2,                   // salta all'uscita
+            l1 + ":",                    // etichetta caso vero
+            "push 1",                    // cond vera (almeno uno era vero)
+            l2 + ":"                     // etichetta di terminazione per pushare sullo stack il risultato
         );
     }
 }
