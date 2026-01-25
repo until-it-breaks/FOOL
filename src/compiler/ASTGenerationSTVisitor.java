@@ -46,6 +46,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitLetInProg(LetInProgContext c) {
 		if (print) printVarAndProdName(c);
 		List<DecNode> declist = new ArrayList<>();
+        for (CldecContext dec : c.cldec()) declist.add((DecNode) visit(dec));
 		for (DecContext dec : c.dec()) declist.add((DecNode) visit(dec));
 		return new ProgLetInNode(declist, visit(c.exp()));
 	}
@@ -255,9 +256,11 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         for (MethdecContext m: c.methdec()) {
             methods.add((MethodNode) visit(m));
         }
-
-        ClassNode n = new ClassNode(className, fields, methods);
-        n.setLine(c.ID(0).getSymbol().getLine());
+        ClassNode n = null;
+        if (c.ID().size()>0) { //non-incomplete ST
+            n = new ClassNode(className, fields, methods);
+            n.setLine(c.CLASS().getSymbol().getLine());
+        }
         return n;
     }
 
@@ -280,7 +283,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         for (DecContext d: c.dec()) {
             decList.add((DecNode) visit(d));
         }
-        return new MethodNode(c.ID(0).getText(),(TypeNode) visit(c.type(0)), parList, decList, visit(c.exp()));
+        MethodNode n = null;
+        if (c.ID().size()>0) { //non-incomplete ST
+            n = new MethodNode(c.ID(0).getText(),(TypeNode) visit(c.type(0)), parList, decList, visit(c.exp()));
+            n.setLine(c.FUN().getSymbol().getLine());
+        }
+        return n;
     }
 
     /**

@@ -18,7 +18,7 @@ cldec  : CLASS ID (EXTENDS ID)?
               LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR    
               CLPAR
                    methdec*                
-              CRPAR ; 
+              CRPAR ;
          
 methdec : FUN ID COLON type 
               LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR 
