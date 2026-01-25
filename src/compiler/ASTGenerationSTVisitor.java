@@ -60,7 +60,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitTimesDiv(TimesDivContext c) {
 		if (print) printVarAndProdName(c);
-        Node n = null;
+        Node n;
         if (c.TIMES() != null) {
             n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.TIMES().getSymbol().getLine());        // setLine added
@@ -74,7 +74,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitPlusMinus(PlusMinusContext c) {
 		if (print) printVarAndProdName(c);
-        Node n = null;
+        Node n;
         if (c.PLUS() != null) {
             n = new PlusNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.PLUS().getSymbol().getLine());
@@ -88,7 +88,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitComp(CompContext c) {
 		if (print) printVarAndProdName(c);
-        Node n = null;
+        Node n;
         if (c.EQ() != null) {
             n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
             n.setLine(c.EQ().getSymbol().getLine());
@@ -146,12 +146,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		if (print) printVarAndProdName(c);
 		return new BoolTypeNode();
 	}
-
-    @Override
-    public Node visitIdType(IdTypeContext c) {
-        if (print) printVarAndProdName(c);
-        return new RefTypeNode(c.ID().getText());
-    }
 
 	@Override
 	public Node visitInteger(IntegerContext c) {
@@ -213,6 +207,30 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return n;
 	}
 
+    @Override
+    public Node visitAndOr(AndOrContext c) {
+        if (print) printVarAndProdName(c);
+        Node n;
+        if (c.AND() != null) {
+            n = new AndNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.AND().getSymbol().getLine());
+        } else {
+            n = new OrNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.OR().getSymbol().getLine());
+        }
+        return n;
+    }
+
+    @Override
+    public Node visitNot(NotContext c) {
+        if (print) printVarAndProdName(c);
+        Node n = new NotNode(visit(c.exp()));
+        n.setLine(c.NOT().getSymbol().getLine());
+        return n;
+    }
+
+    // Object-Oriented Visits
+
     public Node visitCldec(CldecContext c) {
         if (print) printVarAndProdName(c);
         List<FieldNode> fieldList = new ArrayList<>();
@@ -233,13 +251,13 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
             n = new ClassNode(c.ID(0).getText(), fieldList, methodList);
             n.setLine(c.CLASS().getSymbol().getLine());
         }
-
         return n;
     }
 
     public Node visitMethdec(MethdecContext c) {
         if (print) printVarAndProdName(c);
         List<ParNode> parList = new ArrayList<>();
+
         for (int i = 1; i < c.ID().size(); i++) {
             ParNode p = new ParNode(c.ID(i).getText(), (TypeNode) visit(c.type(i)));
             p.setLine(c.ID(i).getSymbol().getLine());
@@ -284,33 +302,14 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
     @Override
     public Node visitNull(NullContext c) {
         if (print) printVarAndProdName(c);
-
         Node n = new EmptyNode();
         n.setLine(c.NULL().getSymbol().getLine());
         return n;
     }
 
     @Override
-    public Node visitAndOr(AndOrContext c) {
-        Node left = visit(c.exp(0));
-        Node right = visit(c.exp(1));
-        Node n;
-
-        if (c.AND() != null) {
-            n = new AndNode(left, right);
-            n.setLine(c.AND().getSymbol().getLine());
-        } else {
-            n = new OrNode(left, right);
-            n.setLine(c.OR().getSymbol().getLine());
-        }
-        return n;
-    }
-
-    @Override
-    public Node visitNot(NotContext c) {
+    public Node visitIdType(IdTypeContext c) {
         if (print) printVarAndProdName(c);
-        Node n = new NotNode(visit(c.exp()));
-        n.setLine(c.NOT().getSymbol().getLine());
-        return n;
+        return new RefTypeNode(c.ID().getText());
     }
 }
