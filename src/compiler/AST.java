@@ -261,7 +261,7 @@ public class AST {
 
         NewNode(String i, List<Node> arg) {
             this.id = i;
-            this.arglist = arg;
+            this.arglist = Collections.unmodifiableList(arg);
         }
 
         @Override
@@ -274,7 +274,7 @@ public class AST {
 
         @Override
         public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return null;
+            return visitor.visitNode(this);
         }
     }
 	
@@ -329,12 +329,12 @@ public class AST {
 	}
 
     public static class ClassTypeNode extends TypeNode {
-        final ArrayList<TypeNode> allFields;
-        final ArrayList<ArrowTypeNode> allMethods;
+        final List<TypeNode> allFields;
+        final List<ArrowTypeNode> allMethods;
 
-        ClassTypeNode(ArrayList<TypeNode> af, ArrayList<ArrowTypeNode> am) {
-            this.allFields = af;
-            this.allMethods = am;
+        ClassTypeNode(List<TypeNode> af, List<ArrowTypeNode> am) {
+            this.allFields = Collections.unmodifiableList(af);
+            this.allMethods = Collections.unmodifiableList(am);
         }
 
         @Override
@@ -360,7 +360,7 @@ public class AST {
 
         @Override
         public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-            return null;
+            return visitor.visitNode(this);
         }
     }
 }
