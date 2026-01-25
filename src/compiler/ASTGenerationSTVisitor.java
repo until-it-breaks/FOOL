@@ -14,18 +14,18 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 
 	String indent;
     public boolean print;
-	
-    ASTGenerationSTVisitor() {}    
+
+    ASTGenerationSTVisitor() {}
     ASTGenerationSTVisitor(boolean debug) { print=debug; }
-        
+
     private void printVarAndProdName(ParserRuleContext ctx) {
-        String prefix="";        
+        String prefix="";
     	Class<?> ctxClass=ctx.getClass(), parentClass=ctxClass.getSuperclass();
         if (!parentClass.equals(ParserRuleContext.class)) // parentClass is the var context (and not ctxClass itself)
         	prefix=lowerizeFirstChar(extractCtxName(parentClass.getName()))+": production #";
-    	System.out.println(indent+prefix+lowerizeFirstChar(extractCtxName(ctxClass.getName())));                               	
+    	System.out.println(indent+prefix+lowerizeFirstChar(extractCtxName(ctxClass.getName())));
     }
-        
+
     @Override
 	public Node visit(ParseTree t) {
     	if (t==null) return null;
@@ -33,7 +33,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         indent=(indent==null)?"":indent+"  ";
         Node result = super.visit(t);
         indent=temp;
-        return result; 
+        return result;
 	}
 
 	@Override
@@ -116,16 +116,19 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitFundec(FundecContext c) {
 		if (print) printVarAndProdName(c);
+        List<DecNode> decList = new ArrayList<>();
 		List<ParNode> parList = new ArrayList<>();
-		for (int i = 1; i < c.ID().size(); i++) { 
+
+		for (int i = 1; i < c.ID().size(); i++) {
 			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.type(i)));
 			p.setLine(c.ID(i).getSymbol().getLine());
 			parList.add(p);
 		}
-		List<DecNode> decList = new ArrayList<>();
+
 		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+
 		Node n = null;
-		if (c.ID().size()>0) { //non-incomplete ST
+		if (!c.ID().isEmpty()) { //non-incomplete ST
 			n = new FunNode(c.ID(0).getText(),(TypeNode)visit(c.type(0)),parList,decList,visit(c.exp()));
 			n.setLine(c.FUN().getSymbol().getLine());
 		}
@@ -143,6 +146,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		if (print) printVarAndProdName(c);
 		return new BoolTypeNode();
 	}
+
+    @Override
+    public Node visitIdType(IdTypeContext c) {
+        if (print) printVarAndProdName(c);
+        return new RefTypeNode(c.ID().getText());
+    }
 
 	@Override
 	public Node visitInteger(IntegerContext c) {
@@ -170,8 +179,8 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		Node thenNode = visit(c.exp(1));
 		Node elseNode = visit(c.exp(2));
 		Node n = new IfNode(ifNode, thenNode, elseNode);
-		n.setLine(c.IF().getSymbol().getLine());			
-        return n;		
+		n.setLine(c.IF().getSymbol().getLine());
+        return n;
 	}
 
 	@Override
@@ -196,13 +205,90 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 
 	@Override
 	public Node visitCall(CallContext c) {
-		if (print) printVarAndProdName(c);		
+		if (print) printVarAndProdName(c);
 		List<Node> arglist = new ArrayList<>();
 		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
 		Node n = new CallNode(c.ID().getText(), arglist);
 		n.setLine(c.ID().getSymbol().getLine());
 		return n;
 	}
+
+    public Node visitCldec(CldecContext c) {
+        if (print) printVarAndProdName(c);
+        List<FieldNode> fieldList = new ArrayList<>();
+
+        for (int i = 1; i < c.ID().size(); i++) {
+            FieldNode f = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(i-1)));
+            f.setLine(c.ID(i).getSymbol().getLine());
+            fieldList.add(f);
+        }
+
+        List<MethodNode> methodList = new ArrayList<>();
+        for (MethdecContext method : c.methdec()) {
+            methodList.add((MethodNode) visit(method));
+        }
+
+        Node n = null;
+        if (!c.ID().isEmpty()) { // non-incomplete ST
+            n = new ClassNode(c.ID(0).getText(), fieldList, methodList);
+            n.setLine(c.CLASS().getSymbol().getLine());
+        }
+
+        return n;
+    }
+
+    public Node visitMethdec(MethdecContext c) {
+        if (print) printVarAndProdName(c);
+        List<ParNode> parList = new ArrayList<>();
+        for (int i = 1; i < c.ID().size(); i++) {
+            ParNode p = new ParNode(c.ID(i).getText(), (TypeNode) visit(c.type(i)));
+            p.setLine(c.ID(i).getSymbol().getLine());
+            parList.add(p);
+        }
+
+        List<DecNode> decList = new ArrayList<>();
+        for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+
+        Node n = null;
+        if (!c.ID().isEmpty()) { // non-incomplete ST
+            n = new MethodNode(c.ID(0).getText(), (TypeNode) visit(c.type(0)), parList, decList, visit(c.exp()));
+            n.setLine(c.ID(0).getSymbol().getLine());
+        }
+        return n;
+    }
+
+    @Override
+    public Node visitDotCall(DotCallContext c) {
+        if (print) printVarAndProdName(c);
+        List<Node> arglist = new ArrayList<>();
+
+        for (ExpContext exp : c.exp()) arglist.add(visit(exp));
+
+        Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist);
+        n.setLine(c.ID(1).getSymbol().getLine());
+        return n;
+    }
+
+    @Override
+    public Node visitNew(NewContext c) {
+        if (print) printVarAndProdName(c);
+        List<Node> arglist = new ArrayList<>();
+
+        for (ExpContext exp : c.exp()) arglist.add(visit(exp));
+
+        Node n = new NewNode(c.ID().getText(), arglist);
+        n.setLine(c.NEW().getSymbol().getLine());
+        return n;
+    }
+
+    @Override
+    public Node visitNull(NullContext c) {
+        if (print) printVarAndProdName(c);
+
+        Node n = new EmptyNode();
+        n.setLine(c.NULL().getSymbol().getLine());
+        return n;
+    }
 
     @Override
     public Node visitAndOr(AndOrContext c) {
@@ -225,118 +311,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         if (print) printVarAndProdName(c);
         Node n = new NotNode(visit(c.exp()));
         n.setLine(c.NOT().getSymbol().getLine());
-        return n;
-    }
-
-    /**
-     cldec  : CLASS ID (EXTENDS ID)?
-         LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR
-         CLPAR
-            methdec*
-         CRPAR ;
-     */
-    @Override
-    public Node visitCldec(CldecContext c) {
-        if (print) printVarAndProdName(c);
-
-        // Get the class name
-        String className = c.ID(0).getText();
-
-        // Collect all fields
-        List<FieldNode> fields = new ArrayList<>();
-        // We are looping over the "type" list here, not the ID list which includes the class name plus all types
-        for (int i = 0; i < c.type().size(); i++) {
-            FieldNode f = new FieldNode(c.ID(i+1).getText(), (TypeNode) visit(c.type(i)));
-            f.setLine(c.ID(i+1).getSymbol().getLine());
-            fields.add(f);
-        }
-
-        // Collect all methods
-        List<MethodNode> methods = new ArrayList<>();
-        for (MethdecContext m: c.methdec()) {
-            methods.add((MethodNode) visit(m));
-        }
-        ClassNode n = null;
-        if (c.ID().size()>0) { //non-incomplete ST
-            n = new ClassNode(className, fields, methods);
-            n.setLine(c.CLASS().getSymbol().getLine());
-        }
-        return n;
-    }
-
-    /**
-     methdec : FUN ID COLON type
-         LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR
-         (LET dec+ IN)? exp
-         SEMIC ;
-     */
-    @Override
-    public Node visitMethdec(MethdecContext c) {
-        if (print) printVarAndProdName(c);
-        List<ParNode> parList = new ArrayList<>();
-        for (int i = 1; i < c.ID().size(); i++) {
-            ParNode p = new ParNode(c.ID(i).getText(), (TypeNode) visit(c.type(i)));
-            p.setLine(c.ID(i).getSymbol().getLine());
-            parList.add(p);
-        }
-        List<DecNode> decList = new ArrayList<>();
-        for (DecContext d: c.dec()) {
-            decList.add((DecNode) visit(d));
-        }
-        MethodNode n = null;
-        if (c.ID().size()>0) { //non-incomplete ST
-            n = new MethodNode(c.ID(0).getText(),(TypeNode) visit(c.type(0)), parList, decList, visit(c.exp()));
-            n.setLine(c.FUN().getSymbol().getLine());
-        }
-        return n;
-    }
-
-    /**
-    NEW ID LPAR (exp (COMMA exp)* )? RPAR #new
-     */
-    @Override
-    public Node visitNew(NewContext c) {
-        if (print) printVarAndProdName(c);
-        List<Node> argList = new ArrayList<>();
-        for (ExpContext e : c.exp()) {
-            argList.add(visit(e));
-        }
-        NewNode n = new NewNode(c.ID().getText(),argList);
-        n.setLine(c.ID().getSymbol().getLine());
-        return n;
-    }
-
-    /**
-     NULL #null
-     */
-    @Override
-    public Node visitNull(NullContext c) {
-        if (print) printVarAndProdName(c);
-        Node n = new EmptyNode();
-        n.setLine(c.NULL().getSymbol().getLine());
-        return n;
-    }
-
-    /**
-     ID DOT ID LPAR (exp (COMMA exp)* )? RPAR #dotCall
-     */
-    @Override
-    public Node visitDotCall(DotCallContext c) {
-        if (print) printVarAndProdName(c);
-        List<Node> argList = new ArrayList<>();
-        for (ExpContext e : c.exp()) {
-            argList.add(visit(e));
-        }
-        // ID(0) is the object, ID(1) is the method
-        ClassCallNode n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), argList);
-        n.setLine(c.ID(0).getSymbol().getLine());
-        return n;
-    }
-
-    public Node visitIdType(IdTypeContext c) {
-        if (print) printVarAndProdName(c);
-        Node n = new RefTypeNode(c.ID().getText());
-        n.setLine(c.ID().getSymbol().getLine());
         return n;
     }
 }
