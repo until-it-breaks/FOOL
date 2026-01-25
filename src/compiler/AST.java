@@ -362,12 +362,10 @@ public class AST {
     }
 
     public static class ClassTypeNode extends TypeNode {
-        final String id;
         final List<TypeNode> allFields;
         final List<ArrowTypeNode> allMethods;
 
-        ClassTypeNode(String i, List<TypeNode> allFields, List<ArrowTypeNode> allMethods) {
-            this.id = i;
+        ClassTypeNode(List<TypeNode> allFields, List<ArrowTypeNode> allMethods) {
             this.allFields = allFields;
             this.allMethods = allMethods;
         }
