@@ -11,7 +11,7 @@ import java.nio.file.*;
 public class Test {
     public static void main(String[] args) throws Exception {
    			
-    	String fileName = "quicksort.fool";
+    	String fileName = "test_class.fool";
 
     	CharStream chars = CharStreams.fromFileName(fileName);
     	FOOLLexer lexer = new FOOLLexer(chars);
@@ -24,12 +24,12 @@ public class Test {
     		parser.getNumberOfSyntaxErrors()+" syntax errors.\n");
 
     	System.out.println("Generating AST.");
-    	ASTGenerationSTVisitor visitor = new ASTGenerationSTVisitor(true); // use true to visualize the ST
+    	ASTGenerationSTVisitor visitor = new ASTGenerationSTVisitor(false); // use true to visualize the ST
     	Node ast = visitor.visit(st);
     	System.out.println("");
 
     	System.out.println("Enriching AST via symbol table.");
-    	SymbolTableASTVisitor symtableVisitor = new SymbolTableASTVisitor();
+    	SymbolTableASTVisitor symtableVisitor = new SymbolTableASTVisitor(true);
     	symtableVisitor.visit(ast);
     	System.out.println("You had "+symtableVisitor.stErrors+" symbol table errors.\n");
 

@@ -153,7 +153,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 
 	@Override
 	public Void visitNode(IdNode n) {
-		printNode(n,n.id+" at nestinglevel "+n.nl); 
+		printNode(n,n.id+" at nestinglevel "+n.nl);
 		visit(n.entry);
 		return null;
 	}
@@ -198,4 +198,72 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		printSTentry("offset "+entry.offset);
 		return null;
 	}
+
+    @Override
+    public Void visitNode(ClassNode n) {
+        printNode(n, n.id);
+        for (FieldNode field : n.fieldList) visit(field);
+        for (MethodNode method : n.methodList) visit(method);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(FieldNode n) {
+        printNode(n, n.id);
+        visit(n.getType());
+        return null;
+    }
+
+    @Override
+    public Void visitNode(MethodNode n) {
+        printNode(n, n.id + " [offset: " + n.offset + "]");
+        visit(n.retType);
+        for (ParNode par : n.parlist) visit(par);
+        for (Node dec : n.declist) visit(dec);
+        visit(n.exp);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(ClassCallNode n) {
+        printNode(n, n.id1 + "." + n.id2 + " [nestinglevel " + n.nl + "]");
+        visit(n.entry);
+        visit(n.methodEntry);
+        for (Node arg : n.arglist) visit(arg);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(NewNode n) {
+        printNode(n, n.id);
+        for (Node arg : n.arglist) visit(arg);
+        visit(n.entry);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(EmptyNode n) {
+        printNode(n);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(RefTypeNode n) {
+        printNode(n, n.id);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(EmptyTypeNode n) {
+        printNode(n);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(ClassTypeNode n) {
+        printNode(n);
+        for (TypeNode fieldType : n.allFields) visit(fieldType);
+        for (ArrowTypeNode methodType : n.allMethods) visit(methodType);
+        return null;
+    }
 }

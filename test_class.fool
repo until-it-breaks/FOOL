@@ -1,0 +1,15 @@
+let
+  class A () {
+    fun doSomething:int() 42;
+  }
+
+  var obj:A = new A(); /* Dichiarato a nestingLevel 0 */
+
+  fun outer:int()
+    let
+      fun inner:int()
+        obj.doSomething(); /* Chiamata a un oggetto dello scope esterno! */
+    in
+      inner();
+in
+  outer();

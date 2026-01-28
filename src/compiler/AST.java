@@ -329,7 +329,6 @@ public class AST {
         final String id;
         final List<Node> arglist;
         STentry entry;
-        int nl;
 
         NewNode(String id, List<Node> arglist) {
             this.id = id;
