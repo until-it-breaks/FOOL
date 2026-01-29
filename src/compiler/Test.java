@@ -11,7 +11,7 @@ import java.nio.file.*;
 public class Test {
     public static void main(String[] args) throws Exception {
    			
-    	String fileName = "test_class.fool";
+    	String fileName = "quicksort.fool";
 
     	CharStream chars = CharStreams.fromFileName(fileName);
     	FOOLLexer lexer = new FOOLLexer(chars);
@@ -24,7 +24,7 @@ public class Test {
     		parser.getNumberOfSyntaxErrors()+" syntax errors.\n");
 
     	System.out.println("Generating AST.");
-    	ASTGenerationSTVisitor visitor = new ASTGenerationSTVisitor(false); // use true to visualize the ST
+    	ASTGenerationSTVisitor visitor = new ASTGenerationSTVisitor(); // use true to visualize the ST
     	Node ast = visitor.visit(st);
     	System.out.println("");
 

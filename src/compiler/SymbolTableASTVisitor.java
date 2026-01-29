@@ -234,23 +234,27 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         if (print) printNode(n);
         Map<String, STentry> hm = symTable.get(0); // All classes found at nestling level 0
 
+        // Create a new ClassTypeNode with empty lists for fields and methods
+        // These lists will be populated during the visit of class members
         ClassTypeNode classTypeNode = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
         STentry entry = new STentry(0, classTypeNode, decOffset--);
 
+        // Insert the class identifier into the global symbol table (level 0)
         if (hm.put(n.id, entry) != null) {
             System.out.println("Class id " + n.id + " at line " + n.getLine() + " already declared");
             stErrors++;
         }
 
+        // Create a virtual table to store class fields and methods
+        // This vtable is added to both the classTable and the symbolTable
         Map<String, STentry> virtualTable = new HashMap<>();
-        // Add the virtual table to the class table for permanent reference
         classTable.put(n.id, virtualTable);
-        // Go one level deeper and add the virtual table to the symbol table
         nestingLevel++;
         symTable.add(virtualTable);
 
         int prevNLDecOffset = decOffset;
 
+        // Field offsets start at -1 and decrement (field 0 at offset -1, field 1 at offset -2, etc.)
         int fieldOffset  = -1;
         for (FieldNode field : n.fieldList) {
             STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset);
@@ -263,9 +267,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             fieldOffset--;
         }
 
-        decOffset = 0; // Offset for methods is 0
+        // Method offsets start at 0 and increment (method 0 at offset 0, method 1 at offset 1, etc.)
+        decOffset = 0;
         for (MethodNode method : n.methodList) {
             visit(method);
+            // Add the method type (ArrowTypeNode) to the ClassTypeNode's method list
+            // The method's offset is used as the index in the list
             classTypeNode.allMethods.add(method.offset, (ArrowTypeNode) method.getType());
         }
 
@@ -283,6 +290,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         for (ParNode par : n.parlist) parTypes.add(par.getType());
 
         // Remember the method offset and create an entry with decOffset which start at 0 and goes upwards.
+        // Save the current offset in the method node for the dispatch table
         n.offset = decOffset;
         STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes, n.retType), decOffset++);
 
@@ -319,6 +327,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     public Void visitNode(ClassCallNode n) {
         if (print) printNode(n);
 
+        // Look up the object (id1) in the symbol table
         STentry entry = stLookup(n.id1);
         if (entry.type == null) {
             System.out.println("Object id " + n.id1 + " at line " + n.getLine() + " not declared");
@@ -329,6 +338,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         n.entry = entry;
         n.nl = nestingLevel;
 
+        // Verify that id1 is of type RefTypeNode (class reference)
         if (!(entry.type instanceof RefTypeNode)) {
             System.out.println("Id " + n.id1 + " at line " + n.getLine() + " is not an object");
             stErrors++;
@@ -339,18 +349,21 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
         Map<String, STentry> virtualTable = classTable.get(className);
 
+        // Verify that the object exists in the symbol table and save lookup information
         if (virtualTable == null) {
             System.out.println("Class id" + n.id1 + " at line " + n.getLine() + " not declared");
             stErrors++;
             return null;
         }
 
+        // Look up the method (id2) in the class's virtual table
         STentry methodEntry = virtualTable.get(n.id2);
         if (methodEntry == null) {
             System.out.println("Method id" + n.id2 + " at line " + n.getLine() + " not found in class " + className);
             stErrors++;
             return null;
         }
+        // Save the method entry in the node for use during type checking
         n.methodEntry = methodEntry;
 
         for (Node arg : n.arglist) visit(arg);
@@ -362,6 +375,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     public Void visitNode(NewNode n) {
         if (print) printNode(n);
 
+        // Retrieve the virtual table of the class from the classTable
         Map<String, STentry> virtualTable = classTable.get(n.id);
         if (virtualTable == null) {
             System.out.println("Class id " + n.id + " at line " + n.getLine() + " not declared");
@@ -369,7 +383,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             return null;
         }
 
-        // Retrieve the STentry from level 0 of the symbol table
+        // Retrieve the STentry of the class from level 0 (global level) of the symbol table
+        // This is necessary to access the ClassTypeNode with information about fields and methods
         STentry classEntry = symTable.get(0).get(n.id);
         if (classEntry == null) {
             System.out.println("Class id " + n.id + " at line " + n.getLine() + " not found in symbol table");

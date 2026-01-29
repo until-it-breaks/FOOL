@@ -6,7 +6,7 @@ import compiler.exc.*;
 
 public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 
-	PrintEASTVisitor() { super(false,true); } 
+	PrintEASTVisitor() { super(false,true); }
 
 	@Override
 	public Void visitNode(ProgLetInNode n) {
@@ -145,7 +145,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 
 	@Override
 	public Void visitNode(CallNode n) {
-		printNode(n,n.id+" at nestinglevel "+n.nl); 
+		printNode(n,n.id+" at nestinglevel "+n.nl);
 		visit(n.entry);
 		for (Node arg : n.arglist) visit(arg);
 		return null;
@@ -169,7 +169,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		printNode(n,n.val.toString());
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(ArrowTypeNode n) {
 		printNode(n);
@@ -189,7 +189,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		printNode(n);
 		return null;
 	}
-	
+
 	@Override
 	public Void visitSTentry(STentry entry) {
 		printSTentry("nestlev "+entry.nl);
