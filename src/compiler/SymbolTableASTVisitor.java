@@ -2,7 +2,6 @@ package compiler;
 
 import java.util.*;
 
-import com.sun.jdi.ClassType;
 import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
@@ -361,7 +360,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         // Look up the method (id2) in the class's virtual table
         STentry methodEntry = virtualTable.get(n.id2);
         if (methodEntry == null) {
-            System.out.println("Method id" + n.id2 + " at line " + n.getLine() + " not found in class " + className);
+            System.out.println("Method id " + n.id2 + " at line " + n.getLine() + " not found in class " + className);
             stErrors++;
             return null;
         }
