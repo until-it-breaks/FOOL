@@ -1,6 +1,8 @@
 package compiler;
 
 import java.util.*;
+
+import com.sun.jdi.ClassType;
 import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;

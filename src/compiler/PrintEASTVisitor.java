@@ -190,14 +190,15 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		return null;
 	}
 
-	@Override
-	public Void visitSTentry(STentry entry) {
-		printSTentry("nestlev "+entry.nl);
-		printSTentry("type");
-		visit(entry.type);
-		printSTentry("offset "+entry.offset);
-		return null;
-	}
+    @Override
+    public Void visitNode(MethodNode n) {
+        printNode(n, n.id + " offset: " + n.offset);
+        visit(n.retType);
+        for (DecNode dec : n.declist) { visit(dec); }
+        for (ParNode par : n.parlist) { visit(par); }
+        visit(n.exp);
+        return null;
+    }
 
     @Override
     public Void visitNode(ClassNode n) {
@@ -211,16 +212,6 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
     public Void visitNode(FieldNode n) {
         printNode(n, n.id);
         visit(n.getType());
-        return null;
-    }
-
-    @Override
-    public Void visitNode(MethodNode n) {
-        printNode(n, n.id);
-        visit(n.retType);
-        for (ParNode par : n.parlist) visit(par);
-        for (Node dec : n.declist) visit(dec);
-        visit(n.exp);
         return null;
     }
 
@@ -264,6 +255,15 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
         printNode(n);
         for (TypeNode fieldType : n.allFields) visit(fieldType);
         for (ArrowTypeNode methodType : n.allMethods) visit(methodType);
+        return null;
+    }
+
+    @Override
+    public Void visitSTentry(STentry entry) {
+        printSTentry("nestlev "+entry.nl);
+        printSTentry("type");
+        visit(entry.type);
+        printSTentry("offset "+entry.offset);
         return null;
     }
 }
