@@ -198,14 +198,19 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         );
     }
 
+    @Override
     public String visitNode(NotNode n) {
-        if (print) printNode(n);
+        String lTrue = freshLabel();
+        String lEnd = freshLabel();
         return nlJoin(
-            visit(n.exp),               // valuta espressione booleana e pusho sullo stack
-            "push 1",                   // push costante 1 sullo stack
-            "sub"                       // sottrai: 1 - exp e pusho il risultato sullo stack
-                                        //      se exp = 0 allora risultato = 1
-                                        //      se exp = 1 allora risultato = 0
+                visit(n.exp),
+                "push 0",
+                "beq " + lTrue, // Se è 0 (false), diventa 1 (true)
+                "push 0",       // Se era 1 (true), diventa 0 (false)
+                "b " + lEnd,
+                lTrue + ":",
+                "push 1",
+                lEnd + ":"
         );
     }
 
