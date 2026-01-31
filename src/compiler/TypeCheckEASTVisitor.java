@@ -195,7 +195,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		TypeNode t = visit(n.entry); 
 		if (t instanceof ArrowTypeNode)
 			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
-		return t;
+		if (t instanceof ClassTypeNode) {
+            throw new TypeException("Wrong usage of class identifier " + n.id, n.getLine());
+        }
+        return t;
 	}
 
 	@Override
@@ -231,6 +234,78 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n);
 		return null;
 	}
+
+    @Override
+    public TypeNode visitNode(MethodNode n) throws TypeException {
+        if (print) printNode(n,n.id);
+        for (Node dec : n.declist)
+            try {
+                visit(dec);
+            } catch (IncomplException e) {
+            } catch (TypeException e) {
+                System.out.println("Type checking error in a declaration: " + e.text);
+            }
+        if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) )
+            throw new TypeException("Wrong return type for method " + n.id,n.getLine());
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(ClassNode n) throws TypeException {
+        if (print) printNode(n, n.id);
+        for (MethodNode meth : n.methodList) {
+            try {
+                visit(meth);
+            } catch (IncomplException e) {
+            } catch (TypeException e) {
+                System.out.println("Type checking error in a method: " + e.text);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(ClassCallNode n) throws TypeException {
+        if (print) printNode(n);
+        TypeNode t = visit(n.methodEntry);
+        if ( !(t instanceof ArrowTypeNode) )
+            throw new TypeException("Invocation of a non-function "+n.id2,n.getLine());
+        ArrowTypeNode at = (ArrowTypeNode) t;
+        if ( !(at.parlist.size() == n.arglist.size()) )
+            throw new TypeException("Wrong number of parameters in the invocation of "+n.id2,n.getLine());
+        for (int i = 0; i < n.arglist.size(); i++)
+            if ( !(isSubtype(visit(n.arglist.get(i)),at.parlist.get(i))) )
+                throw new TypeException("Wrong type for "+(i+1)+"-th parameter in the invocation of "+n.id2,n.getLine());
+        return at.ret;
+    }
+
+    @Override
+    public TypeNode visitNode(NewNode n) throws TypeException {
+        if (print) printNode(n,n.id);
+        TypeNode t = n.entry.type;
+        if ( !(t instanceof ClassTypeNode) )
+            throw new TypeException("Invocation of a non-class "+n.id,n.getLine());
+        ClassTypeNode at = (ClassTypeNode) t;
+        if ( !(at.allFields.size() == n.arglist.size()) )
+            throw new TypeException("Wrong number of parameters in the invocation of "+n.id,n.getLine());
+        for (int i = 0; i < n.arglist.size(); i++)
+            if ( !(isSubtype(visit(n.arglist.get(i)),at.allFields.get(i))) )
+                throw new TypeException("Wrong type for "+(i+1)+"-th parameter in the invocation of "+n.id,n.getLine());
+        return new RefTypeNode(n.id);
+    }
+
+    @Override
+    public TypeNode visitNode(EmptyNode n) throws TypeException {
+        if (print) printNode(n);
+        return new EmptyTypeNode();
+    }
+
+    @Override
+    public TypeNode visitNode(RefTypeNode n) throws TypeException {
+        if (print) printNode(n, n.id);
+        return null;
+    }
+
 
 // STentry (ritorna campo type)
 

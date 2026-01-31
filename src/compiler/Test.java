@@ -29,7 +29,7 @@ public class Test {
     	System.out.println("");
 
     	System.out.println("Enriching AST via symbol table.");
-    	SymbolTableASTVisitor symtableVisitor = new SymbolTableASTVisitor(true);
+    	SymbolTableASTVisitor symtableVisitor = new SymbolTableASTVisitor();
     	symtableVisitor.visit(ast);
     	System.out.println("You had "+symtableVisitor.stErrors+" symbol table errors.\n");
 
@@ -39,7 +39,7 @@ public class Test {
 
     	System.out.println("Checking Types.");
     	try {
-    		TypeCheckEASTVisitor typeCheckVisitor = new TypeCheckEASTVisitor();
+    		TypeCheckEASTVisitor typeCheckVisitor = new TypeCheckEASTVisitor(true);
     		TypeNode mainType = typeCheckVisitor.visit(ast);
     		System.out.print("Type of main program expression is: ");
     		new PrintEASTVisitor().visit(mainType);
