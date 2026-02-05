@@ -277,6 +277,7 @@ public class AST {
         final List<DecNode> declist;
         final Node exp;
         int offset;
+        String label;
 
         MethodNode(String id, TypeNode retType, List<ParNode> parlist, List<DecNode> declist, Node exp) {
             this.id = id;
