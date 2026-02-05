@@ -13,22 +13,22 @@ import static compiler.TypeRels.*;
 //visitSTentry(s) ritorna, per una STentry s, il tipo contenuto al suo interno
 public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException> {
 
-	TypeCheckEASTVisitor() { super(true); } // enables incomplete tree exceptions 
+	TypeCheckEASTVisitor() { super(true); } // enables incomplete tree exceptions
 	TypeCheckEASTVisitor(boolean debug) { super(true,debug); } // enables print for debugging
 
-	//checks that a type object is visitable (not incomplete) 
+	//checks that a type object is visitable (not incomplete)
 	private TypeNode ckvisit(TypeNode t) throws TypeException {
 		visit(t);
 		return t;
-	} 
-	
+	}
+
 	@Override
 	public TypeNode visitNode(ProgLetInNode n) throws TypeException {
 		if (print) printNode(n);
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
@@ -47,11 +47,11 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
-		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
+		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) )
 			throw new TypeException("Wrong return type for function " + n.id,n.getLine());
 		return null;
 	}
@@ -177,7 +177,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(CallNode n) throws TypeException {
 		if (print) printNode(n,n.id);
-		TypeNode t = visit(n.entry); 
+		TypeNode t = visit(n.entry);
 		if ( !(t instanceof ArrowTypeNode) )
 			throw new TypeException("Invocation of a non-function "+n.id,n.getLine());
 		ArrowTypeNode at = (ArrowTypeNode) t;
@@ -192,9 +192,11 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
-		TypeNode t = visit(n.entry); 
+		TypeNode t = visit(n.entry);
 		if (t instanceof ArrowTypeNode)
 			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
+        if (t instanceof ClassTypeNode)
+            throw new TypeException("Wrong usage of class identifier " + n.id,n.getLine());
 		return t;
 	}
 
@@ -211,7 +213,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	}
 
 // gestione tipi incompleti	(se lo sono lancia eccezione)
-	
+
 	@Override
 	public TypeNode visitNode(ArrowTypeNode n) throws TypeException {
 		if (print) printNode(n);
@@ -237,6 +239,98 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitSTentry(STentry entry) throws TypeException {
 		if (print) printSTentry("type");
-		return ckvisit(entry.type); 
+		return ckvisit(entry.type);
 	}
+
+    @Override
+    public TypeNode visitNode(MethodNode n) throws TypeException {
+        if (print) printNode(n,n.id);
+        for (Node dec : n.declist)
+            try {
+                visit(dec);
+            } catch (IncomplException _) {
+            } catch (TypeException e) {
+                System.out.println("MethodNode - Type checking error in a declaration: " + e.text);
+            }
+        if ( !isSubtype(visit(n.exp), ckvisit(n.retType)) )
+            throw new TypeException("Wrong return type for function " + n.id,n.getLine());
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(ClassNode n) throws TypeException {
+        if (print) printNode(n,n.id);
+        for (Node dec : n.methodList)
+            try {
+                visit(dec);
+            } catch (IncomplException _) {
+            } catch (TypeException e) {
+                System.out.println("ClassNode:method - Type checking error in a declaration: " + e.text);
+            }
+
+        for(Node dec : n.fieldList)
+            try {
+                visit(dec);
+            } catch (IncomplException _) {
+            } catch (TypeException e) {
+                System.out.println("ClassNode:field - Type checking error in a declaration: " + e.text);
+            }
+
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(ClassCallNode n) throws TypeException {
+        if (print) printNode(n,n.id1);
+        TypeNode t = visit(n.entry);
+
+        if ( !(t instanceof RefTypeNode) )
+            throw new TypeException("Invocation of a non-class " + n.id1,n.getLine());
+
+        if (!(n.methodEntry.type instanceof ArrowTypeNode at))
+            throw new TypeException("Invocation of a non-function " + n.id2, n.getLine());
+        if (!(at.parlist.size() == n.arglist.size()))
+            throw new TypeException("Wrong number of parameters in the invocation of " + n.id2, n.getLine());
+        for (int i = 0; i < n.arglist.size(); i++)
+            if (!(isSubtype(visit(n.arglist.get(i)), at.parlist.get(i))))
+                throw new TypeException("Wrong type for " + (i + 1) + "-th parameter in the invocation of " + n.id2,
+                        n.getLine());
+        return at.ret;
+    }
+
+    public TypeNode visitNode(NewNode n) throws TypeException {
+        if (print) printNode(n, n.id);
+
+        // Retrieve the ClassTypeNode from the entry field
+        if (!(n.entry.type instanceof ClassTypeNode classType)) {
+            throw new TypeException("New expression with non-class type " + n.id, n.getLine());
+        }
+
+        if (n.arglist.size() != classType.allFields.size()) {
+            throw new TypeException("Wrong number of parameters in the instantiation of " + n.id, n.getLine());
+        }
+
+        // Verify that each argument's type is a subtype of the corresponding field's type
+        for (int i = 0; i < n.arglist.size(); i++) {
+            TypeNode argType = visit(n.arglist.get(i));
+            TypeNode fieldType = classType.allFields.get(i);
+            if (!isSubtype(argType, fieldType)) {
+                throw new TypeException("Wrong type for " + (i + 1) + "-th parameter in the instantiation of " + n.id, n.getLine());
+            }
+        }
+
+        return new RefTypeNode(n.id);
+    }
+
+    @Override
+    public TypeNode visitNode(RefTypeNode n) throws TypeException {
+        if (print) printNode(n);
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(EmptyNode n){
+        if (print) printNode(n);
+        return new EmptyTypeNode();
+    }
 }
