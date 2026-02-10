@@ -13,22 +13,22 @@ import static compiler.TypeRels.*;
 //visitSTentry(s) ritorna, per una STentry s, il tipo contenuto al suo interno
 public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException> {
 
-	TypeCheckEASTVisitor() { super(true); } // enables incomplete tree exceptions 
+	TypeCheckEASTVisitor() { super(true); } // enables incomplete tree exceptions
 	TypeCheckEASTVisitor(boolean debug) { super(true,debug); } // enables print for debugging
 
-	//checks that a type object is visitable (not incomplete) 
+	//checks that a type object is visitable (not incomplete)
 	private TypeNode ckvisit(TypeNode t) throws TypeException {
 		visit(t);
 		return t;
-	} 
-	
+	}
+
 	@Override
 	public TypeNode visitNode(ProgLetInNode n) throws TypeException {
 		if (print) printNode(n);
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
@@ -47,11 +47,11 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
-		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
+		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) )
 			throw new TypeException("Wrong return type for function " + n.id,n.getLine());
 		return null;
 	}
@@ -177,7 +177,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(CallNode n) throws TypeException {
 		if (print) printNode(n,n.id);
-		TypeNode t = visit(n.entry); 
+		TypeNode t = visit(n.entry);
 		if ( !(t instanceof ArrowTypeNode) )
 			throw new TypeException("Invocation of a non-function "+n.id,n.getLine());
 		ArrowTypeNode at = (ArrowTypeNode) t;
@@ -192,7 +192,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
-		TypeNode t = visit(n.entry); 
+		TypeNode t = visit(n.entry);
 		if (t instanceof ArrowTypeNode)
 			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
 		if (t instanceof ClassTypeNode) {
@@ -214,7 +214,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	}
 
 // gestione tipi incompleti	(se lo sono lancia eccezione)
-	
+
 	@Override
 	public TypeNode visitNode(ArrowTypeNode n) throws TypeException {
 		if (print) printNode(n);
@@ -295,23 +295,28 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
     }
 
     @Override
-    public TypeNode visitNode(EmptyNode n) throws TypeException {
-        if (print) printNode(n);
-        return new EmptyTypeNode();
-    }
-
-    @Override
     public TypeNode visitNode(RefTypeNode n) throws TypeException {
         if (print) printNode(n, n.id);
         return null;
     }
 
-
-// STentry (ritorna campo type)
-
 	@Override
 	public TypeNode visitSTentry(STentry entry) throws TypeException {
 		if (print) printSTentry("type");
-		return ckvisit(entry.type); 
+		return ckvisit(entry.type);
 	}
+
+    @Override
+    public TypeNode visitNode(FieldNode n) throws TypeException {
+        if (print) printNode(n,n.id);
+        if ( !isSubtype(visit(n.getType()), ckvisit(n.getType())) )
+            throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(EmptyNode n){
+        if (print) printNode(n);
+        return new EmptyTypeNode();
+    }
 }

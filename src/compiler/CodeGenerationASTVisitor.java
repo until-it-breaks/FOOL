@@ -3,12 +3,11 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
+import svm.ExecuteVM;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import static svm.ExecuteVM.MEMSIZE;
 import static compiler.lib.FOOLlib.*;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
@@ -23,7 +22,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		for (Node dec : n.declist) declCode=nlJoin(declCode,visit(dec));
 		return nlJoin(
 			"push 0",	
-			declCode, // generate code for declarations (allocation)			
+			declCode, // generate code for declarations (allocation)
 			visit(n.exp),
 			"halt",
 			getCode()
@@ -52,19 +51,19 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		putCode(
 			nlJoin(
 				funl+":",
-				"cfp", // set $fp to $sp value
-				"lra", // load $ra value
-				declCode, // generate code for local declarations (they use the new $fp!!!)
-				visit(n.exp), // generate code for function body expression
-				"stm", // set $tm to popped value (function result)
-				popDecl, // remove local declarations from stack
-				"sra", // set $ra to popped value
-				"pop", // remove Access Link from stack
-				popParl, // remove parameters from stack
-				"sfp", // set $fp to popped value (Control Link)
-				"ltm", // load $tm value (function result)
-				"lra", // load $ra value
-				"js"  // jump to to popped address
+				"cfp", // imposta $fp al valore di $sp
+				"lra", // carica il valore di $ra
+				declCode, // genera codice per dichiarazioni locali (usano il nuovo $fp!!!)
+				visit(n.exp), // genera codice per l'espressione corpo della funzione
+				"stm", // imposta $tm al valore poppato (risultato della funzione)
+				popDecl, // rimuove dichiarazioni locali dallo stack
+				"sra", // imposta $ra al valore poppato
+				"pop", // rimuove Access Link dallo stack
+				popParl, // rimuove parametri dallo stack
+				"sfp", // imposta $fp al valore poppato (Control Link)
+				"ltm", // carica il valore di $tm (risultato della funzione)
+				"lra", // carica il valore di $ra
+				"js"  // salta all'indirizzo poppato
 			)
 		);
 		return "push "+funl;		
@@ -177,10 +176,10 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
 		return nlJoin(
-			"lfp", getAR, // retrieve address of frame containing "id" declaration
-			              // by following the static chain (of Access Links)
-			"push "+n.entry.offset, "add", // compute address of "id" declaration
-			"lw" // load value of "id" variable
+			"lfp", getAR, // recupera indirizzo del frame contenente dichiarazione di "id"
+			              // seguendo la catena statica (degli Access Link)
+			"push "+n.entry.offset, "add", // calcola indirizzo della dichiarazione di "id"
+			"lw" // carica valore della variabile "id"
 		);
 	}
 
@@ -200,9 +199,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     public String visitNode(MinusNode n) {
         if (print) printNode(n);
         return nlJoin(
-            visit(n.left),              // valuta operando sinistro e pusho sullo stack
-            visit(n.right),             // valuta operando destro e pusho sullo stack
-            "sub"                       // sottrae: pop right, pop left, push risultato (left - right)
+            visit(n.left),              // valuta operando sinistro e pusha sullo stack
+            visit(n.right),             // valuta operando destro e pusha sullo stack
+            "sub"                       // sottrae: pop right, pop left, pusha risultato (left - right)
         );
     }
 
@@ -210,9 +209,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     public String visitNode(DivNode n) {
         if (print) printNode(n);
         return nlJoin(
-            visit(n.left),              // valuta operando sinistro e pusho sullo stack
-            visit(n.right),             // valuta operando destro e pusho sullo stack
-            "div"                       // divide: pop right, pop left, pusho il risultato (left / right)
+            visit(n.left),              // valuta operando sinistro e pusha sullo stack
+            visit(n.right),             // valuta operando destro e pusha sullo stack
+            "div"                       // divide: pop right, pop left, pusha il risultato (left / right)
         );
     }
 
@@ -223,8 +222,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         return nlJoin(
                 visit(n.exp),
                 "push 0",
-                "beq " + lTrue, // Se è 0 (false), diventa 1 (true)
-                "push 0",       // Se era 1 (true), diventa 0 (false)
+                "beq " + lTrue, // se è 0 (false), diventa 1 (true)
+                "push 0",       // se era 1 (true), diventa 0 (false)
                 "b " + lEnd,
                 lTrue + ":",
                 "push 1",
@@ -238,13 +237,13 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String l1 = freshLabel();       // etichetta per il caso "vero"
         String l2 = freshLabel();       // etichetta per terminare operazione
         return nlJoin(
-            visit(n.left),              // valuta operando sinistro e pusho sullo stack
-            visit(n.right),             // valuta operando destro e pusho sullo stack
-            "bleq " + l1,               // branch if left <= right: pop right, pop left, se cond vera salta a l1
-            "push 0",                   // cond falsa (left > right)
+            visit(n.left),              // valuta operando sinistro e pusha sullo stack
+            visit(n.right),             // valuta operando destro e pusha sullo stack
+            "bleq " + l1,               // salta se left <= right: pop right, pop left, se condizione vera salta a l1
+            "push 0",                   // condizione falsa (left > right)
             "b " + l2,                  // salta incondizionatamente all'uscita
             l1 + ":",                   // etichetta caso vero
-            "push 1",                   // cond vera (left <= right)
+            "push 1",                   // condizione vera (left <= right)
             l2 + ":"                    // etichetta di terminazione per pushare sullo stack il risultato
         );
     }
@@ -255,14 +254,14 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String l1 = freshLabel();       // etichetta per il caso "vero"
         String l2 = freshLabel();       // etichetta per terminare l'operazione
         return nlJoin(
-            visit(n.right),             // valuta operando destro (invertiamo l'ordine rispetto a LEQ) e pusho sullo stack
-            visit(n.left),              // valuta operando sinistro e pusho sullo stack
-            "bleq " + l1,               // branch if right <= left (cioè left >= right): pop left, pop right, se cond vera salta a l1
-            "push 0",                   // cond falsa (left < right)
+            visit(n.right),             // valuta operando destro (invertiamo l'ordine rispetto a LEQ) e pusha sullo stack
+            visit(n.left),              // valuta operando sinistro e pusha sullo stack
+            "bleq " + l1,               // salta se right <= left (cioè left >= right): pop left, pop right, se condizione vera salta a l1
+            "push 0",                   // condizione falsa (left < right)
             "b " + l2,                  // salta incondizionatamente all'uscita
             l1 + ":",                   // etichetta caso vero
-            "push 1",                   // cond vera (left >= right)risultato
-            l2 + ":"                    // etichetta di terminazione per pushare sullo stack il
+            "push 1",                   // condizione vera (left >= right)
+            l2 + ":"                    // etichetta di terminazione per pushare sullo stack il risultato
         );
     }
 
@@ -270,10 +269,10 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     public String visitNode(AndNode n) {
         if (print) printNode(n);
         return nlJoin(
-            visit(n.left),              // valuta operando sinistro e pusho sullo stack
-            visit(n.right),             // valuta operando destro e pusho sullo stack
-            "mult"                      // moltiplica: pop right, pop left, push risultato (left * right)
-                                        //        risultato: 1 solo se entrambi 1
+            visit(n.left),              // valuta operando sinistro e pusha sullo stack
+            visit(n.right),             // valuta operando destro e pusha sullo stack
+            "mult"                      // moltiplica: pop right, pop left, pusha risultato (left * right)
+                                        // risultato: 1 solo se entrambi 1
         );
     }
 
@@ -283,16 +282,16 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String l1 = freshLabel();        // etichetta per il caso vero
         String l2 = freshLabel();        // etichetta per terminare l'operazione
         return nlJoin(
-            visit(n.left),               // valuta operando sinistro e pusho sullo stack
-            "push 1",                    // pusho 1 sullo stack per il confronto
-            "beq " + l1,                 // se left == 1, salta a l1 (già vero, skip right): pop 1, pop left, se uguali salta
-            visit(n.right),              // left era 0, valuta operando destro e pusho sullo stack
-            "push 1",                    // push 1 sullo stack per il confronto
+            visit(n.left),               // valuta operando sinistro e pusha sullo stack
+            "push 1",                    // pusha 1 sullo stack per il confronto
+            "beq " + l1,                 // se left == 1, salta a l1 (già vero, salta right): pop 1, pop left, se uguali salta
+            visit(n.right),              // left era 0, valuta operando destro e pusha sullo stack
+            "push 1",                    // pusha 1 sullo stack per il confronto
             "beq " + l1,                 // se right == 1, salta a l1 (vero): pop 1, pop right, se uguali salta
-            "push 0",                    // entrambi erano 0, allora pusho 0 (falso)
+            "push 0",                    // entrambi erano 0, allora pusha 0 (falso)
             "b " + l2,                   // salta all'uscita
             l1 + ":",                    // etichetta caso vero
-            "push 1",                    // cond vera (almeno uno era vero)
+            "push 1",                    // condizione vera (almeno uno era vero)
             l2 + ":"                     // etichetta di terminazione per pushare sullo stack il risultato
         );
     }
@@ -386,29 +385,33 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
     @Override
     public String visitNode(NewNode n) {
-        if (print) printNode(n, n.id);
-        String retCode = null;
-        for (Node nd : n.arglist) { retCode = nlJoin(retCode, visit(nd)); }
+        String argCode = null;
+        for (Node arg: n.arglist) argCode = nlJoin(argCode, visit(arg));
+        // memorizza argomenti nell'heap e incrementa heap pointer
         for (int i = 0; i < n.arglist.size(); i++) {
-            retCode = nlJoin(retCode,
-                    "lhp",
-                    "sw",
-                    "lhp",
+            argCode = nlJoin(
+                    argCode,
+                    "lhp", // carica heap pointer
+                    "sw",  // memorizza word all'heap pointer
+                    "lhp", // carica heap pointer
                     "push 1",
-                    "add",
-                    "shp");
+                    "add", // incrementa heap pointer
+                    "shp"  // memorizza heap pointer aggiornato
+            );
         }
-        int off = MEMSIZE + n.entry.offset;
-        retCode = nlJoin(retCode,
-                "push " + off,
-                "lw",
-                "lhp",
-                "sw",
-                "lhp",
-                "lhp",
-                "push 1",
-                "add",
-                "shp");
-        return retCode;
+
+        int address = ExecuteVM.MEMSIZE + n.entry.offset;
+        return nlJoin(
+                argCode,
+                "push " + address,	// carica sullo stack l'indirizzo
+                "lw", 				// mette sullo stack il valore in 'address' dalla memoria
+                "lhp", 				// carica sullo stack il valore di hp (come indirizzo dispatch pointer)
+                "sw", 				// memorizza all'indirizzo 'hp' il dispatch pointer
+                "lhp", 				// carica sullo stack il valore di hp
+                "lhp",				// carica hp con lo scopo di incrementarlo
+                "push 1",			// pusha 1
+                "add",				// calcola nuovo valore di hp
+                "shp"				// poppa il nuovo valore e lo mette in hp
+        );
     }
 }
