@@ -219,13 +219,14 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
     @Override
     public String visitNode(NotNode n) {
+        if (print) printNode(n);
         String lTrue = freshLabel();
         String lEnd = freshLabel();
         return nlJoin(
             visit(n.exp),
             "push 0",
-            "beq " + lTrue, // se è 0 (false), diventa 1 (true)
-            "push 0",       // se era 1 (true), diventa 0 (false)
+            "beq " + lTrue,             // se è 0 (false), devo pushare un 1 (true)
+            "push 0",                   // altrimenti era 1 (true) e quindi pusho 0 (false)
             "b " + lEnd,
             lTrue + ":",
             "push 1",
