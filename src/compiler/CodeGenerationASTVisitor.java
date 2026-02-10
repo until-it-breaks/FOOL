@@ -21,7 +21,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String declCode = null;
 		for (Node dec : n.declist) declCode=nlJoin(declCode,visit(dec));
 		return nlJoin(
-			"push 0",	
+			"push 0",
 			declCode, // generate code for declarations (allocation)
 			visit(n.exp),
 			"halt",
@@ -154,12 +154,14 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
                 "ltm" // duplicate top of stack
         );
         if (n.entry.offset < 0) {
+            /* --- CASE: FUNCTION CALL --- */
             retJoin = nlJoin(retJoin,
                     "push "+n.entry.offset, "add", // compute address of "id" declaration
                     "lw", // load address of "id" function
                     "js"  // jump to popped address (saving address of subsequent instruction in $ra)
             );
         } else {
+            /* --- CASE: METHOD CALL --- */
             retJoin = nlJoin(retJoin,
                     "lw",
                     "push "+n.entry.offset, "add",
@@ -220,14 +222,14 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String lTrue = freshLabel();
         String lEnd = freshLabel();
         return nlJoin(
-                visit(n.exp),
-                "push 0",
-                "beq " + lTrue, // se è 0 (false), diventa 1 (true)
-                "push 0",       // se era 1 (true), diventa 0 (false)
-                "b " + lEnd,
-                lTrue + ":",
-                "push 1",
-                lEnd + ":"
+            visit(n.exp),
+            "push 0",
+            "beq " + lTrue, // se è 0 (false), diventa 1 (true)
+            "push 0",       // se era 1 (true), diventa 0 (false)
+            "b " + lEnd,
+            lTrue + ":",
+            "push 1",
+            lEnd + ":"
         );
     }
 
@@ -297,32 +299,6 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     }
 
     @Override
-    public String visitNode(ClassNode n) {
-        if (print) printNode(n, n.id);
-        List<String> dispatchTable = new ArrayList<>();
-        String decClass = null;
-        for (MethodNode meth : n.methodList) {
-            visit(meth);
-            String label = meth.label;
-            int offset = meth.offset;
-            dispatchTable.add(offset, label);
-        }
-        decClass = nlJoin(decClass, "lhp");
-        for (String dt : dispatchTable) {
-            decClass = nlJoin(decClass,
-                    "push " + dt,
-                    "lhp",
-                    "sw",
-                    "lhp",
-                    "push 1",
-                    "add",
-                    "shp"
-            );
-        }
-        return decClass;
-    }
-
-    @Override
     public String visitNode(MethodNode n) {
         if (print) printNode(n, n.id);
         n.label = freshFunLabel();
@@ -385,6 +361,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
     @Override
     public String visitNode(NewNode n) {
+        if (print) printNode(n, n.id);
         String argCode = null;
         for (Node arg: n.arglist) argCode = nlJoin(argCode, visit(arg));
         // memorizza argomenti nell'heap e incrementa heap pointer
@@ -413,5 +390,32 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
                 "add",				// calcola nuovo valore di hp
                 "shp"				// poppa il nuovo valore e lo mette in hp
         );
+    }
+
+    @Override
+    public String visitNode(ClassNode n) throws VoidException {
+        if (print) printNode(n, n.id);
+
+        List<String> dispatchTable = new ArrayList<>();
+        for (MethodNode method : n.methodList) {
+            visit(method);  // Generate code for the method
+            dispatchTable.add(method.offset, method.label);
+        }
+
+        String s = "lhp"; // Load the heap pointer onto the stack
+        // For each method
+        for (String label: dispatchTable) {
+            s = nlJoin(s,
+                "push " + label,        // Put the method address onto the stack
+                "lhp",                  // Load the current Heap address
+                "sw",                   // Heap[hp] = method address
+                // Increase hp by 1 for the next entry
+                "lhp",
+                "push 1",
+                "add",
+                "shp"
+            );
+        }
+        return s;
     }
 }

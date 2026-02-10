@@ -295,8 +295,6 @@ public class AST {
         final String id;
         final List<FieldNode> fieldList;
         final List<MethodNode> methodList;
-        STentry entry;
-        int nl;
 
         ClassNode(String i, List<FieldNode> fl, List<MethodNode> ml) {
             this.id = i;
