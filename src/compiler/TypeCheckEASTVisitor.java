@@ -319,12 +319,4 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
         if (print) printNode(n);
         return null;
     }
-
-    @Override
-    public TypeNode visitNode(FieldNode n) throws TypeException {
-        if (print) printNode(n,n.id);
-        if ( !isSubtype(visit(n.getType()), ckvisit(n.getType())) )
-            throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
-        return null;
-    }
 }
