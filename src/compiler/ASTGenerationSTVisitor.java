@@ -234,6 +234,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
     public Node visitCldec(CldecContext c) {
         if (print) printVarAndProdName(c);
         List<FieldNode> fieldList = new ArrayList<>();
+        List<MethodNode> methodList = new ArrayList<>();
 
         for (int i = 1; i < c.ID().size(); i++) {
             FieldNode f = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(i-1)));
@@ -241,7 +242,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
             fieldList.add(f);
         }
 
-        List<MethodNode> methodList = new ArrayList<>();
         for (MethdecContext method : c.methdec()) {
             methodList.add((MethodNode) visit(method));
         }
@@ -270,7 +270,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         Node n = null;
         if (!c.ID().isEmpty()) { // non-incomplete ST
             n = new MethodNode(c.ID(0).getText(), (TypeNode) visit(c.type(0)), parList, decList, visit(c.exp()));
-            n.setLine(c.ID(0).getSymbol().getLine());
+            n.setLine(c.FUN().getSymbol().getLine());
         }
         return n;
     }
