@@ -8,8 +8,8 @@ import compiler.lib.*;
 
 public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
-    private List<Map<String, STentry>> symTable = new ArrayList<>();
-    private Map<String, Map<String, STentry>> classTable = new HashMap<>();
+    private final List<Map<String, STentry>> symTable = new ArrayList<>();
+    private final Map<String, Map<String, STentry>> classTable = new HashMap<>();
     private int nestingLevel = 0; // current nesting level
     private int decOffset = -2; // counter for offset of local declarations at current nesting level
     int stErrors = 0;
@@ -330,7 +330,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
         // Look up the object (id1) in the symbol table
         STentry entry = stLookup(n.id1);
-        if (entry.type == null) {
+        if (entry == null) {
             System.out.println("Object id " + n.id1 + " at line " + n.getLine() + " not declared");
             stErrors++;
             return null;
@@ -347,7 +347,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         }
 
         String className = ((RefTypeNode) entry.type).id;
-
         Map<String, STentry> virtualTable = classTable.get(className);
 
         // Verify that the object exists in the symbol table and save lookup information
