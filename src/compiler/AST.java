@@ -259,7 +259,6 @@ public class AST {
 
     public static class FieldNode extends DecNode {
         final String id;
-        final TypeNode type;
 
         FieldNode(String id, TypeNode typeNode) {
             this.id = id;

@@ -264,7 +264,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
                 stErrors++;
             }
             int position = -fieldEntry.offset - 1;
-            classTypeNode.allFields.add(position, field.type);
+            classTypeNode.allFields.add(position, field.getType());
             fieldOffset--;
         }
 
