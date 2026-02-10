@@ -26,3 +26,8 @@ It is **heavily recommended** to use **IntelliJ IDEA**. The project structure is
     * `src/svm/SVM.g4`
     * `src/visualsvm/SVM.g4`
 5. **Run**: Launch the compiler by running the main method in `src/compiler/Test.java`.
+
+## Contributors
+* [@Jiekai Sun](https://github.com/until-it-breaks)
+* [@Simone Carpi](https://github.com/MrDorby)
+* [@Martin Tomassi](https://github.com/mtomas03)
