@@ -194,8 +194,8 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
     public Void visitNode(MethodNode n) {
         printNode(n, n.id + " offset: " + n.offset);
         visit(n.retType);
-        for (DecNode dec : n.declist) { visit(dec); }
         for (ParNode par : n.parlist) { visit(par); }
+        for (Node dec : n.declist) { visit(dec); }
         visit(n.exp);
         return null;
     }
